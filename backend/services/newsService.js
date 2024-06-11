@@ -1,7 +1,7 @@
 const axios = require('axios'); // Make sure to import Axios
 
 const fetchNews = async (query, from, to) => {
-    const API_KEY = '40ccd287886f49769f03b939245a2e11';
+    const API_KEY = '';
     let url = `https://newsapi.org/v2/everything?q=${query}&apiKey=${API_KEY}&sortBy=popularity`;
 
     if (from) {

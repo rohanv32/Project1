@@ -1,0 +1,39 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  text-align: center;
+}
+
+header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background: #333;
+  color: white;
+}
+
+.news-search input {
+  margin-right: 10px;
+}
+
+.news-list {
+  margin: 20px;
+}
+
+.news-article {
+  margin-bottom: 20px;
+}
+
+.notification {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f44336;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+}

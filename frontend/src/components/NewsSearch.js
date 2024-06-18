@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 
 function NewsSearch({ onSearch }) {
-    const [keyword, setKeyword] = useState('');
-    const [country, setCountry] = useState('');
+    const [ticker, setTicker] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
     const handleSearch = async () => {
         console.log('Search button clicked');
         try {
-            console.log('Calling onSearch with:', { keyword, country, startDate, endDate });
-            await onSearch(keyword, country, startDate, endDate);
+            await onSearch(ticker, startDate, endDate);
         } catch (error) {
             console.error('Error searching news:', error);
         }
@@ -20,15 +18,9 @@ function NewsSearch({ onSearch }) {
         <div className="news-search">
             <input 
                 type="text" 
-                value={keyword} 
-                onChange={(e) => setKeyword(e.target.value)} 
-                placeholder="Search news..."
-            />
-            <input 
-                type="text" 
-                value={country} 
-                onChange={(e) => setCountry(e.target.value)} 
-                placeholder="Country..."
+                value={ticker} 
+                onChange={(e) => setTicker(e.target.value)} 
+                placeholder="Stock ticker..."
             />
             <input 
                 type="date" 

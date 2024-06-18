@@ -1,45 +1,71 @@
-import React, { useState } from 'react';
-import NewsSearch from './components/NewsSearch';
-import NewsList from './components/NewsList';
-import SentimentAnalysis from './components/SentimentAnalysis';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import debounce from 'lodash.debounce';
+import Home from './components/Home';
+import LoadingSpinner from './components/LoadingSpinner';
+
+const NewsList = lazy(() => import('./components/NewsList'));
+const SentimentAnalysis = lazy(() => import('./components/SentimentAnalysis'));
+const JournalistRating = lazy(() => import('./components/JournalistRating'));
+const StockInfo = lazy(() => import('./components/StockInfo'));
 
 function App() {
     const [news, setNews] = useState([]);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('news');
+    const [activeTab, setActiveTab] = useState('home');
+    const [journalistRating, setJournalistRating] = useState(null);
+    const [stockData, setStockData] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    const handleSearch = async (keyword, country, startDate, endDate) => {
-      try {
-          const query = `${keyword}${country ? ` ${country}` : ''}`;
-          console.log('Fetching news with parameters:', { query, startDate, endDate });
-          const response = await fetch(`/api/news?keyword=${encodeURIComponent(query)}&from=${startDate}&to=${endDate}`);
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          const data = await response.json();
-          setNews(data.articles);
-          setError(null);
-      } catch (error) {
-          setError(error.message);
-      }
-  };
+    const handleSearch = useCallback(debounce(async (ticker, journalist, startDate, endDate) => {
+        setLoading(true);
+        setActiveTab('news');
 
-    const switchTab = (tab) => {
-        setActiveTab(tab);
-    };
+        try {
+            const [newsResponse, stockResponse, journalistResponse] = await Promise.all([
+                fetch(`/api/news?ticker=${encodeURIComponent(ticker)}&from=${startDate}&to=${endDate}`),
+                fetch(`/api/stock/${encodeURIComponent(ticker)}`),
+                fetch(`/api/news/journalist/${encodeURIComponent(journalist)}`)
+            ]);
+
+            if (!newsResponse.ok || !stockResponse.ok || !journalistResponse.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const [newsData, stockData, journalistData] = await Promise.all([
+                newsResponse.json(),
+                stockResponse.json(),
+                journalistResponse.json()
+            ]);
+
+            setNews(newsData.articles);
+            setStockData(stockData);
+            setJournalistRating(journalistData.rating);
+            setError(null);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }, 300), []);
 
     return (
-        <div className="app">
-            <header>
-                <NewsSearch onSearch={handleSearch} />
-            </header>
-            {error && <p className="error">{error}</p>}
+        <div className="App">
+            <h1>News Sentiment Analysis</h1>
             <div className="tabs">
-                <button className={activeTab === 'news' ? 'active' : ''} onClick={() => switchTab('news')}>News</button>
-                <button className={activeTab === 'sentiment' ? 'active' : ''} onClick={() => switchTab('sentiment')}>Sentiment Analysis</button>
+                <button onClick={() => setActiveTab('home')} className={activeTab === 'home' ? 'active' : ''}>Home</button>
+                <button onClick={() => setActiveTab('news')} className={activeTab === 'news' ? 'active' : ''}>News</button>
+                <button onClick={() => setActiveTab('sentiment')} className={activeTab === 'sentiment' ? 'active' : ''}>Sentiment Analysis</button>
+                <button onClick={() => setActiveTab('stock')} className={activeTab === 'stock' ? 'active' : ''}>Stock Info</button>
             </div>
-            {activeTab === 'news' && <NewsList news={news} />}
-            {activeTab === 'sentiment' && <SentimentAnalysis headlines={news.map(article => article.title)} />}
+            {activeTab === 'home' && <Home onSearch={handleSearch} />}
+            <Suspense fallback={<LoadingSpinner />}>
+                {activeTab === 'news' && <NewsList news={news} />}
+                {activeTab === 'sentiment' && <SentimentAnalysis headlines={news.map(article => article.title)} />}
+                {activeTab === 'stock' && <StockInfo stockData={stockData} />}
+            </Suspense>
+            {loading && <p>Loading...</p>}
+            {error && <p>Error: {error}</p>}
         </div>
     );
 }

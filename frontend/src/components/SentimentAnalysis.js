@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Sentiment from 'sentiment'; // Import the Sentiment library
+import Sentiment from 'sentiment';
 
 function SentimentAnalysis({ headlines }) {
     const [recommendation, setRecommendation] = useState('Hold');
@@ -10,20 +10,22 @@ function SentimentAnalysis({ headlines }) {
             const sentiment = new Sentiment();
             let totalScore = 0;
 
-            headlines.forEach(headline => {
-                const result = sentiment.analyze(headline);
-                totalScore += result.score;
-            });
+            if (headlines && Array.isArray(headlines)) {
+                headlines.forEach(headline => {
+                    const result = sentiment.analyze(headline);
+                    totalScore += result.score;
+                });
 
-            const averageScore = totalScore / headlines.length;
-            setAverageScore(averageScore);
+                const avgScore = totalScore / headlines.length;
+                setAverageScore(avgScore);
 
-            if (averageScore > 0) {
-                setRecommendation('Buy');
-            } else if (averageScore < 0) {
-                setRecommendation('Sell');
-            } else {
-                setRecommendation('Hold');
+                if (avgScore > 0) {
+                    setRecommendation('Buy');
+                } else if (avgScore < 0) {
+                    setRecommendation('Sell');
+                } else {
+                    setRecommendation('Hold');
+                }
             }
         };
 

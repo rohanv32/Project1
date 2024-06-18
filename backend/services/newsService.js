@@ -1,26 +1,37 @@
-const axios = require('axios'); // Make sure to import Axios
+const axios = require('axios');
 
-const fetchNews = async (query, from, to) => {
-    const API_KEY = '';
-    let url = `https://newsapi.org/v2/everything?q=${query}&apiKey=${API_KEY}&sortBy=popularity`;
-
-    if (from) {
-        url += `&from=${from}`;
-    }
-    if (to) {
-        url += `&to=${to}`;
-    }
-
-    console.log('Request URL:', url); // Log the URL for debugging
-
+const fetchNews = async (ticker, from, to) => {
     try {
+        const url = `https://newsapi.org/v2/everything?q=${ticker}&apiKey=40ccd287886f49769f03b939245a2e11&sortBy=popularity&from=${from}&to=${to}`;
         const response = await axios.get(url);
-        if (!response.data) {
-            throw new Error('No data received from news API');
+
+        if (!response.data || !Array.isArray(response.data.articles)) {
+            throw new Error('Invalid response from news API');
         }
-        return response.data;
+
+        const articles = response.data.articles.map(article => ({
+            title: article.title,
+            description: article.description,
+            author: article.author || 'Unknown', // Ensure author is populated
+            content: article.content,
+            url: article.url,
+            publishedAt: article.publishedAt
+        }));
+
+        const authors = articles.map(article => ({
+            name: article.author,
+            historical_accuracy: Math.random(), // Dummy data, replace with actual calculation
+            publication_count: Math.random(), // Dummy data, replace with actual calculation
+            engagement_score: Math.random(), // Dummy data, replace with actual calculation
+            background_score: Math.random() // Dummy data, replace with actual calculation
+        }));
+
+        // Remove duplicate authors
+        const uniqueAuthors = [...new Map(authors.map(author => [author.name, author])).values()];
+
+        return { articles, authors: uniqueAuthors };
     } catch (error) {
-        console.error('Error in fetchNews:', error); // More detailed error logging
+        console.error('Error fetching news:', error);
         throw error;
     }
 };
